@@ -6,14 +6,13 @@
 package csce550_project1;
 
 import java.util.ArrayList;
+import java.util.Stack;
 
 /**
  *
  * @author CMD Drake
  */
 public class SymbolTableEntry {
-
-    int symbolTableType;
 
     //Main Info
     String type;
@@ -27,8 +26,10 @@ public class SymbolTableEntry {
     //FUNCTIONS 
     String parameters;
     String body;
-
     //END FUNCTIONS
+    
+    Stack<SymbolTableEntry> st = new Stack<SymbolTableEntry>();
+    
     SymbolTableEntry() {
         type = "";
         name = "";
@@ -75,6 +76,11 @@ public class SymbolTableEntry {
 
         return entry;
 
+    }
+    
+    public void updateEntry(){
+        st.push(this);
+        
     }
 
 }

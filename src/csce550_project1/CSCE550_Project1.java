@@ -21,8 +21,6 @@ public class CSCE550_Project1 {
 
     static final String reserved_words[] = {"else", "func", "global", "if", "local", "while"};
 
-    public static LinkedList<LinkedList<SymbolTableEntry>> SymbolTable = new LinkedList<LinkedList<SymbolTableEntry>>();
-
     public static void main(String[] args) throws IOException {
         // TODO code application logic here
 
@@ -32,7 +30,7 @@ public class CSCE550_Project1 {
             int count = 1;
             while ((line = br.readLine()) != null) {
                 //System.out.println(line);
-                addToSymbolTable(line,count);
+                addToSymbolTable(line, count);
                 count++;
 
             }
@@ -77,40 +75,38 @@ public class CSCE550_Project1 {
         SymbolTableEntry entry = new SymbolTableEntry();
         if (global == true) {
 
-            if (parsed.length >= (indexST + 3) && parsed[indexST+2].equals(":=")) {
+            if (parsed.length >= (indexST + 3) && parsed[indexST + 2].equals(":=")) {
 
                 entry = new SymbolTableEntry("global", parsed[indexST + 1], parsed[indexST + 3]);
 
-            } else if (parsed.length >= (indexST + 3) && !parsed[indexST+2].equals(":=")) {
+            } else if (parsed.length >= (indexST + 3) && !parsed[indexST + 2].equals(":=")) {
 
-                    System.out.println("Syntax Error at line " + number + "\n");
-                    global = false;
-            }
-            else {
-                if(parsed[indexST + 1].contains(";")){
+                System.out.println("Syntax Error at line " + number + "\n");
+                global = false;
+            } else {
+                if (parsed[indexST + 1].contains(";")) {
                     entry = new SymbolTableEntry("global", parsed[indexST + 1], "0");
                 }
             }
-            if(global == true){
-            System.out.println(entry.toString());
+            if (global == true) {
+                System.out.println(entry.toString());
             }
         } else if (local == true) {
-             if (parsed.length >= (indexST + 3) && parsed[indexST+2].equals(":=")) {
+            if (parsed.length >= (indexST + 3) && parsed[indexST + 2].equals(":=")) {
 
                 entry = new SymbolTableEntry("local", parsed[indexST + 1], parsed[indexST + 3]);
 
-            } else if (parsed.length >= (indexST + 3) && !parsed[indexST+2].equals(":=")) {
+            } else if (parsed.length >= (indexST + 3) && !parsed[indexST + 2].equals(":=")) {
 
-                    System.out.println("Syntax Error at line " + number + "\n");
-                    local = false;
-            }
-            else {
-                if(parsed[indexST + 1].contains(";")){
+                System.out.println("Syntax Error at line " + number + "\n");
+                local = false;
+            } else {
+                if (parsed[indexST + 1].contains(";")) {
                     entry = new SymbolTableEntry("local", parsed[indexST + 1], "0");
                 }
             }
-            if(local == true){
-            System.out.println(entry.toString());
+            if (local == true) {
+                System.out.println(entry.toString());
             }
         } else if (func == true) {
 
