@@ -14,21 +14,67 @@ import java.util.ArrayList;
 public class SymbolTableEntry {
 
     int symbolTableType;
-    
+
     //Main Info
     String type;
-    String name;   
+    String name;
     //END MAIN INFO
-    
+
     //VARIABLES 
-    String value; 
+    String value;
     //END VARIABLES 
-    
+
     //FUNCTIONS 
-    ArrayList parameters; 
-    AST body; 
-    
+    String parameters;
+    String body;
+
     //END FUNCTIONS
-    
-    
+    SymbolTableEntry() {
+        type = "";
+        name = "";
+        value = "";
+        parameters = "";
+        body = "";
+
+    }
+
+    SymbolTableEntry(String type, String name, String value) {
+
+        this.type = type;
+        this.name = name;
+        this.value = value;
+
+    }
+
+    SymbolTableEntry(String type, String name, String parameters, String Body) {
+
+        this.type = type;
+        this.name = name;
+        this.parameters = parameters;
+        this.body = body;
+
+    }
+
+    public String toString() {
+
+        return printSymbolTable();
+    }
+
+    private String printSymbolTable() {
+        String entry = "";
+        entry = entry + "Type: " + type + "\n";
+        entry = entry + "Name: " + name + "\n";
+
+        if (type == "global" || type == "local") {
+            entry = entry + "Value: " + value + "\n";
+        } else if (type == "func") {
+            entry = entry + "Parameters: " + parameters + "\n";
+            entry = entry + "Body: " + body + "\n";
+
+        }
+
+        return entry;
+
+    }
+
 }
