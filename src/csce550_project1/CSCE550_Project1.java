@@ -15,15 +15,18 @@ import java.io.*;
  */
 public class CSCE550_Project1 {
 
-    //static final String reserved_words[] = {"global", "local", "func", "if", "else", "while"};
     static final String other_tokens[] = {"{", "}", "(", ")", ";", ","};
     static final String operators[] = {"-", "*", "/", "+", "==", "!=", ":="};
 
     static final String reserved_words[] = {"else", "func", "global", "if", "local", "while"};
 
-    //SymbolTable Vars
+    //SymbolTable Helper Vars
     static int indexST = 0;
     static ArrayList<String> bodyList = new ArrayList<String>();
+
+    static ArrayList<SymbolTableEntry> SymbolTable = new ArrayList<SymbolTableEntry>();
+
+    static ArrayList<String> nonSymbolTable = new ArrayList<String>();
 
     public static void main(String[] args) throws IOException {
         // TODO code application logic here
@@ -36,19 +39,62 @@ public class CSCE550_Project1 {
 
                 String[] parsed = line.split("\\s+");
 
-                String type = parseSymbolTable(parsed, false, br, count);
+                String type = parseSymbolTable(parsed, line, false, br, count);
 
                 addToSymbolTable(type, parsed, count);
                 count++;
 
             }
         }
+//        printSymbolTable();
+//        System.out.println(nonSymbolTable);
 
+        performOperations();
+
+    }
+
+    public static void performOperations() {
+        for (int i = 0; i < nonSymbolTable.size(); i++) {
+            String line = nonSymbolTable.get(i);
+
+            if (line.endsWith(";")) {
+                String symbol = line.subSequence(0, line.length() - 1).toString();
+
+                String value = findInSymbolTableByName(symbol);
+                if(!value.equals(""))
+                {
+                    System.out.println(value);
+                }
+            }
+        }
+    }
+
+    public static String findInSymbolTableByName(String symbolString) {
+
+        for (int i = 0; i < SymbolTable.size(); i++) {
+
+            if (symbolString.equals(SymbolTable.get(i).name)) {
+                String value = SymbolTable.get(i).value;
+                return value;
+            }
+
+        }
+
+        return "";
+    }
+
+    public static void printSymbolTable() {
+        for (int i = 1; i <= SymbolTable.size(); i++) {
+
+            SymbolTableEntry x = SymbolTable.get(i);
+            System.out.println(x);
+
+        }
     }
 
     public static String parseSymbolTableBody(String[] parsed, boolean parseLocation) {
         String type = "";
-        for (int i = 0; i < parsed.length; i++) {
+        for (int i = 0; i < parsed.length - 1; i++) {
 
             if (parsed[i].equals("global")) {
                 //System.out.println("Global Detected");
@@ -71,7 +117,7 @@ public class CSCE550_Project1 {
         return type;
     }
 
-    public static String parseSymbolTable(String[] parsed, boolean parseLocation, BufferedReader br, int count) throws IOException {
+    public static String parseSymbolTable(String[] parsed, String line, boolean parseLocation, BufferedReader br, int count) throws IOException {
         String type = "";
         for (int i = 0; i < parsed.length; i++) {
 
@@ -99,6 +145,13 @@ public class CSCE550_Project1 {
                     i = parsed.length + 1;
                     break;
                 }
+            }
+            if (type == "") {
+                if (!line.equals("")) {
+                    //System.out.println(line);
+                    nonSymbolTable.add(line);
+                }
+
             }
 
         }
@@ -155,47 +208,56 @@ public class CSCE550_Project1 {
         if (global == true) {
 
             if (parsed.length >= (indexST + 3) && parsed[indexST + 2].equals(":=")) {
-
-                entry = new SymbolTableEntry("global", parsed[indexST + 1], parsed[indexST + 3]);
+                String value = parsed[indexST + 3].subSequence(0, parsed[indexST + 3].length() - 1).toString();
+                entry = new SymbolTableEntry("global", parsed[indexST + 1], value);
+                SymbolTable.add(entry);
 
             } else if (parsed.length >= (indexST + 3) && !parsed[indexST + 2].equals(":=")) {
 
                 System.out.println("Syntax Error at line " + number + "\n");
                 global = false;
             } else if (parsed[indexST + 1].contains(";")) {
-                entry = new SymbolTableEntry("global", parsed[indexST + 1], "0");
+                String symbol = parsed[indexST + 1].subSequence(0, parsed[indexST + 1].length() - 1).toString();
+                entry = new SymbolTableEntry("global", symbol, "0");
+                SymbolTable.add(entry);
             }
             if (global == true) {
-                System.out.println(entry.toString());
+                // System.out.println(entry.toString());
             }
+
         } else if (local == true) {
             if (parsed.length >= (indexST + 3) && parsed[indexST + 2].equals(":=")) {
 
                 entry = new SymbolTableEntry("local", parsed[indexST + 1], parsed[indexST + 3]);
-
+                SymbolTable.add(entry);
             } else if (parsed.length >= (indexST + 3) && !parsed[indexST + 2].equals(":=")) {
 
                 System.out.println("Syntax Error at line " + number + "\n");
                 local = false;
             } else if (parsed[indexST + 1].contains(";")) {
-                entry = new SymbolTableEntry("local", parsed[indexST + 1], "0");
+                String symbol = parsed[indexST + 1].subSequence(0, parsed[indexST + 1].length() - 1).toString();
+                entry = new SymbolTableEntry("local", symbol, "0");                SymbolTable.add(entry);
             }
             if (local == true) {
-                System.out.println(entry.toString());
+                // System.out.println(entry.toString());
             }
+
         } else if (func == true) {
 
             String name = parsed[indexST + 1].substring(0, parsed[indexST + 1].indexOf("("));
             String parameters = parsed[indexST + 1].substring((parsed[indexST + 1].indexOf("(") + 1), parsed[indexST + 1].indexOf(")"));
 
             entry = new SymbolTableEntry("func", name, parameters, bodyList);
-            System.out.println(entry.toString());
+            SymbolTable.add(entry);
+
+            // System.out.println(entry.toString());
             String[] bodyArr = new String[bodyList.size()];
 
             for (int i = 0; i < bodyList.size(); i++) {
                 bodyArr = bodyList.get(i).split("\\s+");
                 type = parseSymbolTableBody(bodyArr, true);
                 addToSymbolTable(type, bodyArr, number);
+
             }
 
         }
