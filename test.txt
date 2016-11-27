@@ -1,11 +1,11 @@
 global i := 5;
 global ret; 
 
-func fact(n){
+func fact(n) {
 	if(n==0) 1;
 	else n * fact(n-1);}
 
-func ifact(n){
+func ifact(n) {
 	local ans := 1; 
 	while(n != 0){
 		ans := ans * n;

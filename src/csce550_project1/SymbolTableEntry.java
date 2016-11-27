@@ -25,7 +25,7 @@ public class SymbolTableEntry {
 
     //FUNCTIONS 
     String parameters;
-    String body;
+    ArrayList<String> body;
     //END FUNCTIONS
     
     Stack<SymbolTableEntry> st = new Stack<SymbolTableEntry>();
@@ -35,7 +35,7 @@ public class SymbolTableEntry {
         name = "";
         value = "";
         parameters = "";
-        body = "";
+        body = new ArrayList<String>();
 
     }
 
@@ -47,7 +47,7 @@ public class SymbolTableEntry {
 
     }
 
-    SymbolTableEntry(String type, String name, String parameters, String Body) {
+    SymbolTableEntry(String type, String name, String parameters, ArrayList<String> body) {
 
         this.type = type;
         this.name = name;
