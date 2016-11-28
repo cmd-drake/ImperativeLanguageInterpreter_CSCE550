@@ -46,11 +46,11 @@ public class CSCE550_Project1 {
 
             }
         }
-        System.out.println("Symbol Table:\n -------------------------------");
+        System.out.println("---------------Symbol Table----------------\n");
         printSymbolTable();
-        System.out.println("Code to Process Table:\n -------------------------------");
+        System.out.println("---------------Code to Process Table----------------\n");
         System.out.println(nonSymbolTable);
-
+        System.out.println("---------------Output----------------\n");
         performOperations();
 
     }
@@ -71,17 +71,31 @@ public class CSCE550_Project1 {
     }
 
     public static String findInSymbolTableByName(String symbolString) {
-
+        String name = "";
         for (int i = 0; i < SymbolTable.size(); i++) {
 
-            if (symbolString.equals(SymbolTable.get(i).name)) {
+            if (SymbolTable.get(i).type.equals("func")) {
+                name = symbolString.substring(0, symbolString.indexOf("("));
+
+            }
+            if (symbolString.equals(SymbolTable.get(i).name) && (SymbolTable.get(i).type.equals("global") || SymbolTable.get(i).type.equals("local"))) {
                 String value = SymbolTable.get(i).value;
                 return value;
+            } else if (name.equals(SymbolTable.get(i).name) && (SymbolTable.get(i).type.equals("func"))) {
+
+                processFunction(SymbolTable.get(i));
+
             }
 
         }
 
         return "";
+    }
+
+    public static void processFunction(SymbolTableEntry entry) {
+
+        
+        
     }
 
     public static void printSymbolTable() {
@@ -288,6 +302,10 @@ public class CSCE550_Project1 {
         boolean contains = temp.contains(keyword);
 
         return (contains);
+    }
+
+    public static void print(String str) {
+        System.out.println(str);
     }
 
 }
