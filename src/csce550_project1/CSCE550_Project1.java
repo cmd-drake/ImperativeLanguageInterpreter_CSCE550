@@ -46,8 +46,10 @@ public class CSCE550_Project1 {
 
             }
         }
-//        printSymbolTable();
-//        System.out.println(nonSymbolTable);
+        System.out.println("Symbol Table:\n -------------------------------");
+        printSymbolTable();
+        System.out.println("Code to Process Table:\n -------------------------------");
+        System.out.println(nonSymbolTable);
 
         performOperations();
 
@@ -61,8 +63,7 @@ public class CSCE550_Project1 {
                 String symbol = line.subSequence(0, line.length() - 1).toString();
 
                 String value = findInSymbolTableByName(symbol);
-                if(!value.equals(""))
-                {
+                if (!value.equals("")) {
                     System.out.println(value);
                 }
             }
@@ -84,7 +85,7 @@ public class CSCE550_Project1 {
     }
 
     public static void printSymbolTable() {
-        for (int i = 1; i <= SymbolTable.size(); i++) {
+        for (int i = 0; i < SymbolTable.size(); i++) {
 
             SymbolTableEntry x = SymbolTable.get(i);
             System.out.println(x);
@@ -236,7 +237,8 @@ public class CSCE550_Project1 {
                 local = false;
             } else if (parsed[indexST + 1].contains(";")) {
                 String symbol = parsed[indexST + 1].subSequence(0, parsed[indexST + 1].length() - 1).toString();
-                entry = new SymbolTableEntry("local", symbol, "0");                SymbolTable.add(entry);
+                entry = new SymbolTableEntry("local", symbol, "0");
+                SymbolTable.add(entry);
             }
             if (local == true) {
                 // System.out.println(entry.toString());
