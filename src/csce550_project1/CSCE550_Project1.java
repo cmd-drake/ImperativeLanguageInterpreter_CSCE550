@@ -83,7 +83,7 @@ public class CSCE550_Project1 {
                 return value;
             } else if (name.equals(SymbolTable.get(i).name) && (SymbolTable.get(i).type.equals("func"))) {
 
-                processFunction(SymbolTable.get(i));
+                processFunction(symbolString, SymbolTable.get(i));
 
             }
 
@@ -92,10 +92,104 @@ public class CSCE550_Project1 {
         return "";
     }
 
-    public static void processFunction(SymbolTableEntry entry) {
+    public static void processFunction(String symbolString, SymbolTableEntry entry) {
 
-        
-        
+        String param = symbolString.substring(symbolString.indexOf("(") + 1, symbolString.length() - 1);
+
+        String value = findInSymbolTableByName(param);
+
+        String reservedword = "";
+        String lhs = "";
+        String op = "";
+        String rhs = "";
+        for (int i = 0; i < entry.body.size() - 1; i++) {
+            String line = entry.body.get(i);
+            String[] parsed = line.split("\\s+");
+
+            for (int j = 0; j < parsed.length; j++) {
+                boolean conditionalflag = false;
+
+                if (parsed[j].equals("if")) {
+                    reservedword = "if";
+                    lhs = parsed[j + 1];
+                    op = parsed[j + 2];
+                    rhs = parsed[j + 3];
+                    rhs = rhs.substring(0, rhs.indexOf(")"));
+                    boolean lhsVerified = false;
+                    if (lhs.equals(param)) {
+                        lhsVerified = true;
+                    }
+                    String lhsV = "";
+                    if (lhsVerified == false) {
+                        lhsV = findInSymbolTableByName(param);
+                    } else {
+                        lhs = value;
+                    }
+
+                    if (isOperator(op)) {
+                        switch (op) {
+                            case "==":
+                                if (lhsV.equals(rhs)) {
+                                    conditionalflag = true;
+                                    System.out.println(parsed[j + 4].substring(0, parsed[j + 4].indexOf(";")));
+                                } else if (!lhsV.equals(rhs)) {
+                                    conditionalflag = false;
+                                } else {
+                                    print("Syntax Error");
+                                }
+
+                                break;
+                            case "!=":
+                                if (!lhsV.equals(rhs)) {
+                                    conditionalflag = true;
+                                    System.out.println(parsed[j + 4].substring(0, parsed[j + 4].indexOf(";")));
+                                } else if (lhsV.equals(rhs)) {
+                                    conditionalflag = false;
+                                } else {
+                                    print("Syntax Error");
+                                }
+
+                                break;
+                            default:
+                                print("Syntax Error");
+                                break;
+                        }
+                    } else {
+                        print("Syntax Error");
+                    }
+
+                    if (conditionalflag == false) {
+                        String elseline = entry.body.get(i + 1);
+                       
+                        String[] elseparsed = elseline.split("\\s+");
+
+                        for (int k = 0; k < elseparsed.length; k++) {
+                            
+                            if (elseparsed[k].equals("else")) {
+                                print("boom");
+                            }
+
+                        }
+
+                    }
+
+                    break;
+
+                } else if (parsed[j].equals("while")) {
+                    //System.out.println("Local Detected");
+                    reservedword = "while";
+                    lhs = parsed[j + 1];
+                    op = parsed[j + 2];
+                    rhs = parsed[j + 3];
+                    break;
+                }
+
+            }
+
+        }
+
+        print(reservedword + "," + lhs + "," + op + "," + rhs);
+
     }
 
     public static void printSymbolTable() {
