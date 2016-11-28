@@ -160,13 +160,17 @@ public class CSCE550_Project1 {
 
                     if (conditionalflag == false) {
                         String elseline = entry.body.get(i + 1);
-                       
-                        String[] elseparsed = elseline.split("\\s+");
 
+                        String[] elseparsed = elseline.split("\\s+");
+                        String elselhs = "";
+                        String elseop = "";
+                        String elserhs = "";
                         for (int k = 0; k < elseparsed.length; k++) {
-                            
+
                             if (elseparsed[k].equals("else")) {
-                                print("boom");
+                                elselhs = elseparsed[k + 1];
+                                elseop = elseparsed[k + 2];
+                                elserhs = elseparsed[k + 3];
                             }
 
                         }
