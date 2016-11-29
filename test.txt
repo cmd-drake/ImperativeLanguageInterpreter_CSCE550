@@ -2,7 +2,7 @@ global i := 5;
 global ret; 
 
 func fact(n) {
-	if (n == 0) 1;
+	if (n != 5) n;
 	else n * fact(n-1);}
 
 func ifact(n) {

@@ -46,11 +46,11 @@ public class CSCE550_Project1 {
 
             }
         }
-        System.out.println("---------------Symbol Table----------------\n");
+        System.out.println("---------------Symbol Table----------------");
         printSymbolTable();
-        System.out.println("---------------Code to Process Table----------------\n");
-        System.out.println(nonSymbolTable);
-        System.out.println("---------------Output----------------\n");
+        System.out.println("---------------Code to Process Table----------------");
+        printnonSymbolTable();
+        System.out.println("---------------Output----------------");
         performOperations();
 
     }
@@ -63,6 +63,7 @@ public class CSCE550_Project1 {
                 String symbol = line.subSequence(0, line.length() - 1).toString();
 
                 String value = findInSymbolTableByName(symbol);
+
                 if (!value.equals("")) {
                     System.out.println(value);
                 }
@@ -72,19 +73,21 @@ public class CSCE550_Project1 {
 
     public static String findInSymbolTableByName(String symbolString) {
         String name = "";
+
         for (int i = 0; i < SymbolTable.size(); i++) {
 
-            if (SymbolTable.get(i).type.equals("func")) {
+            if (SymbolTable.get(i).type.equals("func") && (symbolString.indexOf("(") > 0)) {
                 name = symbolString.substring(0, symbolString.indexOf("("));
 
             }
             if (symbolString.equals(SymbolTable.get(i).name) && (SymbolTable.get(i).type.equals("global") || SymbolTable.get(i).type.equals("local"))) {
                 String value = SymbolTable.get(i).value;
+
                 return value;
             } else if (name.equals(SymbolTable.get(i).name) && (SymbolTable.get(i).type.equals("func"))) {
 
-                processFunction(symbolString, SymbolTable.get(i));
-
+                String value = processFunction(symbolString, SymbolTable.get(i));
+                return value;
             }
 
         }
@@ -92,11 +95,44 @@ public class CSCE550_Project1 {
         return "";
     }
 
-    public static void processFunction(String symbolString, SymbolTableEntry entry) {
+    public static String performOp(String lhs, String op, String rhs) {
+
+        int result = 0;
+        String lval = findInSymbolTableByName(lhs);
+        String rval = findInSymbolTableByName(rhs);
+
+        int lint = Integer.parseInt(findInSymbolTableByName(lhs));
+        int rint = Integer.parseInt(findInSymbolTableByName(rhs));
+
+        switch (op) {
+            case "+":
+                result = lint + rint;
+                break;
+            case "-":
+                result = lint - rint;
+                break;
+            case "*":
+                result = lint * rint;
+                break;
+            case "/":
+                result = lint / rint;
+                break;
+            default:
+                return "";
+        }
+
+        return "" + result;
+    }
+
+    public static String processFunction(String symbolString, SymbolTableEntry entry) {
 
         String param = symbolString.substring(symbolString.indexOf("(") + 1, symbolString.length() - 1);
 
         String value = findInSymbolTableByName(param);
+
+        SymbolTableEntry add = new SymbolTableEntry();
+        add = new SymbolTableEntry("local", entry.parameters, value);
+        SymbolTable.add(add);
 
         String reservedword = "";
         String lhs = "";
@@ -131,18 +167,46 @@ public class CSCE550_Project1 {
                             case "==":
                                 if (lhsV.equals(rhs)) {
                                     conditionalflag = true;
-                                    System.out.println(parsed[j + 4].substring(0, parsed[j + 4].indexOf(";")));
+
+                                    if (parsed.length == (j + 5)) {
+                                        String temp = parsed[j + 4].substring(0, parsed[j + 4].indexOf(";"));
+                                        if (findInSymbolTableByName(temp).equals("")) {
+                                            return parsed[j + 4].substring(0, parsed[j + 4].indexOf(";"));
+
+                                        } else {
+                                            return (findInSymbolTableByName(parsed[j + 4].substring(0, parsed[j + 4].indexOf(";"))));
+
+                                        }
+
+                                    } else if (parsed.length == (j + 7)) {
+
+                                        return (performOp(parsed[j + 4], parsed[j + 5], parsed[j + 6].substring(0, parsed[j + 6].indexOf(";"))));
+                                    }
                                 } else if (!lhsV.equals(rhs)) {
                                     conditionalflag = false;
                                 } else {
                                     print("Syntax Error");
                                 }
-
                                 break;
                             case "!=":
+
                                 if (!lhsV.equals(rhs)) {
                                     conditionalflag = true;
-                                    System.out.println(parsed[j + 4].substring(0, parsed[j + 4].indexOf(";")));
+
+                                    if (parsed.length == (j + 5)) {
+                                        String temp = parsed[j + 4].substring(0, parsed[j + 4].indexOf(";"));
+                                        if (findInSymbolTableByName(temp).equals("")) {
+                                            return parsed[j + 4].substring(0, parsed[j + 4].indexOf(";"));
+
+                                        } else {
+                                            return (findInSymbolTableByName(parsed[j + 4].substring(0, parsed[j + 4].indexOf(";"))));
+
+                                        }
+
+                                    } else if (parsed.length == (j + 7)) {
+
+                                        return (performOp(parsed[j + 4], parsed[j + 5], parsed[j + 6].substring(0, parsed[j + 6].indexOf(";"))));
+                                    }
                                 } else if (lhsV.equals(rhs)) {
                                     conditionalflag = false;
                                 } else {
@@ -159,6 +223,7 @@ public class CSCE550_Project1 {
                     }
 
                     if (conditionalflag == false) {
+                        //print("else");
                         String elseline = entry.body.get(i + 1);
 
                         String[] elseparsed = elseline.split("\\s+");
@@ -174,6 +239,8 @@ public class CSCE550_Project1 {
                             }
 
                         }
+
+                        print(elselhs + "," + elseop + "," + elserhs);
 
                     }
 
@@ -191,9 +258,9 @@ public class CSCE550_Project1 {
             }
 
         }
-
-        print(reservedword + "," + lhs + "," + op + "," + rhs);
-
+        SymbolTable.remove(add);
+        // print(reservedword + "," + lhs + "," + op + "," + rhs);
+        return "Value not computed";
     }
 
     public static void printSymbolTable() {
@@ -201,6 +268,14 @@ public class CSCE550_Project1 {
 
             SymbolTableEntry x = SymbolTable.get(i);
             System.out.println(x);
+
+        }
+    }
+
+    public static void printnonSymbolTable() {
+        for (int i = 0; i < nonSymbolTable.size(); i++) {
+
+            System.out.println(nonSymbolTable.get(i));
 
         }
     }
