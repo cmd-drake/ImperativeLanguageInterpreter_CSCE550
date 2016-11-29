@@ -64,9 +64,8 @@ public class CSCE550_Project1 {
 
                 String value = findInSymbolTableByName(symbol);
 
-                if (!value.equals("")) {
-                    System.out.println(value);
-                }
+                System.out.println("Result of: " + symbol + " = " + value);
+
             }
         }
     }
@@ -95,15 +94,51 @@ public class CSCE550_Project1 {
         return "";
     }
 
+    public static void updateSymbolTableEntry(String symbolString, String newVal) {
+        for (int i = 0; i < SymbolTable.size(); i++) {
+
+            if (symbolString.equals(SymbolTable.get(i).name) && (SymbolTable.get(i).type.equals("global") || SymbolTable.get(i).type.equals("local"))) {
+                SymbolTable.get(i).value = newVal;
+
+            }
+
+        }
+
+    }
+
+    public static boolean doesSymbolExist(String symbolString) {
+        for (int i = 0; i < SymbolTable.size(); i++) {
+
+            if (symbolString.equals(SymbolTable.get(i).name) && (SymbolTable.get(i).type.equals("global") || SymbolTable.get(i).type.equals("local"))) {
+                return true;
+
+            }
+
+        }
+        return false;
+
+    }
+
     public static String performOp(String lhs, String op, String rhs) {
 
         int result = 0;
         String lval = findInSymbolTableByName(lhs);
         String rval = findInSymbolTableByName(rhs);
+        int lint;
+        if (!lval.equals("")) {
+            lint = Integer.parseInt(findInSymbolTableByName(lhs));
+        } else {
+            lint = Integer.parseInt(lhs);
+        }
+        int rint = 0;
+        if (!op.equals(":=")) {
 
-        int lint = Integer.parseInt(findInSymbolTableByName(lhs));
-        int rint = Integer.parseInt(findInSymbolTableByName(rhs));
-
+            if (!rval.equals("")) {
+                rint = Integer.parseInt(findInSymbolTableByName(rhs));
+            } else {
+                rint = Integer.parseInt(rhs);
+            }
+        }
         switch (op) {
             case "+":
                 result = lint + rint;
@@ -117,6 +152,9 @@ public class CSCE550_Project1 {
             case "/":
                 result = lint / rint;
                 break;
+            case ":=":
+                updateSymbolTableEntry(lhs, rhs);
+                return rhs;
             default:
                 return "";
         }
@@ -132,21 +170,20 @@ public class CSCE550_Project1 {
 
         SymbolTableEntry add = new SymbolTableEntry();
         add = new SymbolTableEntry("local", entry.parameters, value);
-        SymbolTable.add(add);
 
-        String reservedword = "";
+        SymbolTable.add(add);
         String lhs = "";
         String op = "";
         String rhs = "";
         for (int i = 0; i < entry.body.size() - 1; i++) {
+
             String line = entry.body.get(i);
             String[] parsed = line.split("\\s+");
-
+            print(line);
             for (int j = 0; j < parsed.length; j++) {
                 boolean conditionalflag = false;
 
                 if (parsed[j].equals("if")) {
-                    reservedword = "if";
                     lhs = parsed[j + 1];
                     op = parsed[j + 2];
                     rhs = parsed[j + 3];
@@ -170,21 +207,26 @@ public class CSCE550_Project1 {
 
                                     if (parsed.length == (j + 5)) {
                                         String temp = parsed[j + 4].substring(0, parsed[j + 4].indexOf(";"));
+                                        //if condition with non-variables
                                         if (findInSymbolTableByName(temp).equals("")) {
+
                                             return parsed[j + 4].substring(0, parsed[j + 4].indexOf(";"));
 
-                                        } else {
+                                        } else {//if condition with variables
+
                                             return (findInSymbolTableByName(parsed[j + 4].substring(0, parsed[j + 4].indexOf(";"))));
 
                                         }
 
-                                    } else if (parsed.length == (j + 7)) {
-
-                                        return (performOp(parsed[j + 4], parsed[j + 5], parsed[j + 6].substring(0, parsed[j + 6].indexOf(";"))));
+                                    } else if (parsed.length == (j + 7)) { //if with a operation to calc.
+                                        String result = performOp(parsed[j + 4], parsed[j + 5], parsed[j + 6].substring(0, parsed[j + 6].indexOf(";")));
+                                        print("hello" + parsed[j + 4]);
+                                        //updateSymbolTableEntry()
+                                        return (result);
                                     }
-                                } else if (!lhsV.equals(rhs)) {
+                                } else if (!lhsV.equals(rhs)) {//not equal
                                     conditionalflag = false;
-                                } else {
+                                } else {//syntax error, could not parse
                                     print("Syntax Error");
                                 }
                                 break;
@@ -241,26 +283,151 @@ public class CSCE550_Project1 {
                         }
 
                         //print(elselhs + "," + elseop + "," + elserhs);
-                        return(performOp(elselhs, elseop, elserhs));
+                        return (performOp(elselhs, elseop, elserhs));
 
                     }
 
                     break;
 
                 } else if (parsed[j].equals("while")) {
-                    //System.out.println("Local Detected");
-                    reservedword = "while";
+                    //System.out.println("while Detected");
                     lhs = parsed[j + 1];
                     op = parsed[j + 2];
                     rhs = parsed[j + 3];
-                    break;
-                }
+                    int count = 0;
+                    switch (op) {
+                        case "==":
+                            lhs = lhs.substring(1, lhs.length());
+                            rhs = rhs.substring(0, rhs.indexOf(")"));
+                            int l = i;
 
+                            if (doesSymbolExist(lhs) == true && doesSymbolExist(rhs) == false) {
+                                String left = findInSymbolTableByName(lhs);
+                                while (left.equals(rhs)) {
+                                    String whileLine = entry.body.get(l + 1);
+
+                                    String[] whileArr = whileLine.split("\\s+");
+                                    int aIndex = 0;
+                                    for (int a = 0; a < whileArr.length; a++) {
+                                        if (!whileArr[a].equals("")) {
+                                            aIndex = a;
+                                            a = whileArr.length + 1;
+                                        }
+                                    }
+                                    String result = performOp(whileArr[aIndex + 2], whileArr[aIndex + 3], whileArr[aIndex + 4].substring(0, whileArr[aIndex + 4].indexOf(";")));
+
+                                    updateSymbolTableEntry(whileArr[aIndex], result);
+
+                                    l++;
+                                    if (whileLine.substring(whileLine.length() - 1).equals("}")) {
+                                        count = l;
+                                        l = i;
+                                    }
+                                    left = findInSymbolTableByName(lhs);
+
+                                }
+                            } else if (doesSymbolExist(lhs) == true && doesSymbolExist(rhs) == true) {
+                                String left = findInSymbolTableByName(lhs);
+                                String right = findInSymbolTableByName(rhs);
+                                while (left.equals(right)) {
+                                    String whileLine = entry.body.get(l + 1);
+
+                                    String[] whileArr = whileLine.split("\\s+");
+                                    int aIndex = 0;
+                                    for (int a = 0; a < whileArr.length; a++) {
+                                        if (!whileArr[a].equals("")) {
+                                            aIndex = a;
+                                            a = whileArr.length + 1;
+                                        }
+                                    }
+                                    String result = performOp(whileArr[aIndex + 2], whileArr[aIndex + 3], whileArr[aIndex + 4].substring(0, whileArr[aIndex + 4].indexOf(";")));
+
+                                    updateSymbolTableEntry(whileArr[aIndex], result);
+
+                                    l++;
+                                    if (whileLine.substring(whileLine.length() - 1).equals("}")) {
+                                        count = l;
+                                        l = i;
+                                    }
+                                    left = findInSymbolTableByName(lhs);
+                                    right = findInSymbolTableByName(rhs);
+                                }
+                            }
+                            break;
+                        case "!=":
+                            lhs = lhs.substring(1, lhs.length());
+                            rhs = rhs.substring(0, rhs.indexOf(")"));
+                            l = i;
+
+                            if (doesSymbolExist(lhs) == true && doesSymbolExist(rhs) == false) {
+                                String left = findInSymbolTableByName(lhs);
+                                while (!left.equals(rhs)) {
+                                    String whileLine = entry.body.get(l + 1);
+
+                                    String[] whileArr = whileLine.split("\\s+");
+                                    int aIndex = 0;
+                                    for (int a = 0; a < whileArr.length; a++) {
+                                        if (!whileArr[a].equals("")) {
+                                            aIndex = a;
+                                            a = whileArr.length + 1;
+                                        }
+                                    }
+                                    String result = performOp(whileArr[aIndex + 2], whileArr[aIndex + 3], whileArr[aIndex + 4].substring(0, whileArr[aIndex + 4].indexOf(";")));
+
+                                    updateSymbolTableEntry(whileArr[aIndex], result);
+
+                                    l++;
+                                    if (whileLine.substring(whileLine.length() - 1).equals("}")) {
+                                        count = l;
+
+                                        l = i;
+                                    }
+                                    left = findInSymbolTableByName(lhs);
+
+                                }
+                            } else if (doesSymbolExist(lhs) == true && doesSymbolExist(rhs) == true) {
+                                String left = findInSymbolTableByName(lhs);
+                                String right = findInSymbolTableByName(rhs);
+                                while (!left.equals(right)) {
+                                    String whileLine = entry.body.get(l + 1);
+
+                                    String[] whileArr = whileLine.split("\\s+");
+                                    int aIndex = 0;
+                                    for (int a = 0; a < whileArr.length; a++) {
+                                        if (!whileArr[a].equals("")) {
+                                            aIndex = a;
+                                            a = whileArr.length + 1;
+                                        }
+                                    }
+                                    String result = performOp(whileArr[aIndex + 2], whileArr[aIndex + 3], whileArr[aIndex + 4].substring(0, whileArr[aIndex + 4].indexOf(";")));
+
+                                    updateSymbolTableEntry(whileArr[aIndex], result);
+
+                                    l++;
+                                    if (whileLine.substring(whileLine.length() - 1).equals("}")) {
+                                        count = l;
+
+                                        l = i;
+                                    }
+                                    left = findInSymbolTableByName(lhs);
+                                    right = findInSymbolTableByName(rhs);
+                                }
+
+                            }
+
+                            break;
+                    }
+
+                    //i = count;
+                    
+                    
+                }
+                //print("plz:" + line);
             }
 
         }
+
         SymbolTable.remove(add);
-        // print(reservedword + "," + lhs + "," + op + "," + rhs);
         return "Value not computed";
     }
 
@@ -417,7 +584,7 @@ public class CSCE550_Project1 {
         } else if (local == true) {
             if (parsed.length >= (indexST + 3) && parsed[indexST + 2].equals(":=")) {
 
-                entry = new SymbolTableEntry("local", parsed[indexST + 1], parsed[indexST + 3]);
+                entry = new SymbolTableEntry("local", parsed[indexST + 1], parsed[indexST + 3].substring(0, parsed[indexST + 3].indexOf(";")));
                 SymbolTable.add(entry);
             } else if (parsed.length >= (indexST + 3) && !parsed[indexST + 2].equals(":=")) {
 
