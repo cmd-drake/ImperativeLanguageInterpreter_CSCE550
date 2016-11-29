@@ -2,8 +2,8 @@ global i := 5;
 global ret; 
 
 func fact(n) {
-	if (n != 5) n;
-	else n * fact(n-1);}
+	if (n != 5) 1;
+	else n + fact(n-2);}
 
 func ifact(n) {
 	local ans := 1; 

@@ -240,7 +240,8 @@ public class CSCE550_Project1 {
 
                         }
 
-                        print(elselhs + "," + elseop + "," + elserhs);
+                        //print(elselhs + "," + elseop + "," + elserhs);
+                        return(performOp(elselhs, elseop, elserhs));
 
                     }
 
