@@ -31,7 +31,6 @@ public class CSCE550_Project1 {
     public static void main(String[] args) throws IOException {
         // TODO code application logic here
 
-        FileInputStream in = null;
         try (BufferedReader br = new BufferedReader(new FileReader("test.txt"))) {
             String line;
             int count = 1;
@@ -112,11 +111,17 @@ public class CSCE550_Project1 {
         return "";
     }
 
-    public static void updateSymbolTableEntry(String symbolString, String newVal) {
+    public static void updateSymbolTableEntry(String symbolString, String newVal, boolean flag) {
         for (int i = 0; i < SymbolTable.size(); i++) {
 
             if (symbolString.equals(SymbolTable.get(i).name) && (SymbolTable.get(i).type.equals("global") || SymbolTable.get(i).type.equals("local"))) {
-                SymbolTable.get(i).value = newVal;
+                if (flag == true) {
+                    //print("adding: " + newVal);
+                    SymbolTable.get(i).updateEntry(newVal);
+
+                } else {
+                    SymbolTable.get(i).value = newVal;
+                }
 
             }
 
@@ -188,11 +193,15 @@ public class CSCE550_Project1 {
 
         return false;
     }
+    static String recursion = "";
+    static int recursionResult = 0;
+    static List<Integer> recurs = new ArrayList<Integer>();
+    static int result = 0;
 
     public static String performOp(String lhs, String op, String rhs, String[] arr) {
 
-        //print("Perform Op: " + lhs + op + rhs);
         boolean funcFlagL = false;
+        String revertName = "";
         if (lhs.contains("(")) {
             funcFlagL = isFunc(lhs.substring(0, lhs.indexOf("(")));
         } else {
@@ -204,7 +213,7 @@ public class CSCE550_Project1 {
         } else {
             funcFlagR = isFunc(rhs);
         }
-        int result = 0;
+
         int lint = 0;
         int rint = 0;
         // print("Bool Check: " + funcFlagL + funcFlagR);
@@ -246,6 +255,7 @@ public class CSCE550_Project1 {
             }
 
             if (isInteger(leftEntry.value)) {
+
                 lint = Integer.parseInt(leftEntry.value);
             } else {
                 lint = Integer.parseInt(findInSymbolTableByName(leftEntry.value));
@@ -259,6 +269,24 @@ public class CSCE550_Project1 {
         } else {
 
             if (funcFlagL == true) {
+                SymbolTableEntry rightEntry = new SymbolTableEntry();
+                if (rhs.contains("(")) {
+                    rightEntry = getEntry(rhs.substring(0, rhs.indexOf(";") - 1));
+
+                } else if (!findInSymbolTableByName(rhs).equals("")) {
+
+                    rightEntry = getEntry(rhs);
+
+                } else {
+                    rightEntry.value = rhs;
+                }
+
+                if (isInteger(rightEntry.value)) {
+                    rint = Integer.parseInt(rightEntry.value);
+                } else {
+                    rint = Integer.parseInt(findInSymbolTableByName(rightEntry.value));
+                }
+
                 int count = 0;
                 int totalCount = 0;
                 for (int i = 0; i < arr.length; i++) {
@@ -274,14 +302,78 @@ public class CSCE550_Project1 {
 
                     if (isInteger(ans)) {
                         lint = Integer.parseInt(ans);
+
                     } else {
                         lint = Integer.parseInt(findInSymbolTableByName(ans));
+
                     }
 
-                    updateSymbolTableEntry(lhs, ans);
+                    recurs.add(rint);
+                    //print(recurs.toString());
+
+                    updateSymbolTableEntry(arr[count + 1], ans, true);
+                    // print(recurs.toString());
+
+                    switch (op) {
+                        case "+":
+                            for (int i = 0; i < recurs.size(); i++) {
+                                result = (int) recurs.get(i) + result;
+                            }
+
+                            break;
+                        case "-":
+                            for (int i = 0; i < recurs.size(); i++) {
+                                result = (int) recurs.get(i) - result;
+                            }
+                            break;
+                        case "*":
+                            for (int i = 0; i < recurs.size(); i++) {
+                                // print(recurs.get(i) + "," + result);
+                                result = recurs.get(i) * result;
+
+                            }
+                            break;
+                        case "/":
+                            for (int i = 0; i < recurs.size(); i++) {
+                                result = (int) recurs.get(i) / result;
+                            }
+                            break;
+
+                    }
+
+                    //print("Do Op" + lint + op + rint + "," + result);
+                    recursionResult = 0;
+                    recursion = "";
+                    SymbolTableEntry entry = getEntry(arr[count].substring(0, arr[count].indexOf("(")));
+
+                    processFunction(entry);
+                    revertName = arr[count + 1];
+
+                    SymbolTableEntry revert = getEntry(revertName);
+                    revert.revertEntry();
+                    return result + "";
+
                 }
             }
             if (funcFlagR == true) {
+                SymbolTableEntry leftEntry = new SymbolTableEntry();
+
+                if (lhs.contains("(")) {
+                    leftEntry = getEntry(lhs.substring(0, lhs.indexOf("(")));
+
+                } else if (!findInSymbolTableByName(lhs).equals("")) {
+                    leftEntry = getEntry(lhs);
+
+                } else {
+                    leftEntry.value = lhs;
+                }
+                if (isInteger(leftEntry.value)) {
+
+                    lint = Integer.parseInt(leftEntry.value);
+                } else {
+                    lint = Integer.parseInt(findInSymbolTableByName(leftEntry.value));
+                }
+
                 int count = 0;
                 int totalCount = 0;
                 for (int i = 0; i < arr.length; i++) {
@@ -300,14 +392,57 @@ public class CSCE550_Project1 {
                     } else {
                         rint = Integer.parseInt(findInSymbolTableByName(ans));
                     }
-                    
-                    updateSymbolTableEntry(arr[count+1], ans);
+
+                    recurs.add(lint);
+                    //print(recurs.toString());
+
+                    updateSymbolTableEntry(arr[count + 1], ans, true);
+                    // print(recurs.toString());
+
+                    switch (op) {
+                        case "+":
+                            for (int i = 0; i < recurs.size(); i++) {
+                                result = (int) recurs.get(i) + result;
+                            }
+
+                            break;
+                        case "-":
+                            for (int i = 0; i < recurs.size(); i++) {
+                                result = (int) recurs.get(i) - result;
+                            }
+                            break;
+                        case "*":
+                            for (int i = 0; i < recurs.size(); i++) {
+                                // print(recurs.get(i) + "," + result);
+                                result = recurs.get(i) * result;
+
+                            }
+                            break;
+                        case "/":
+                            for (int i = 0; i < recurs.size(); i++) {
+                                result = (int) recurs.get(i) / result;
+                            }
+                            break;
+
+                    }
+
+                    //print("Do Op" + lint + op + rint + "," + result);
+                    recursionResult = 0;
+                    recursion = "";
                     SymbolTableEntry entry = getEntry(arr[count].substring(0, arr[count].indexOf("(")));
+
                     processFunction(entry);
+                    revertName = arr[count + 1];
+
+                    SymbolTableEntry revert = getEntry(revertName);
+                    revert.revertEntry();
+                    return result + "";
+
                 }
             }
+
         }
-        //print("Do Op" + lint + op + rint);
+
         switch (op) {
             case "+":
                 result = lint + rint;
@@ -322,8 +457,7 @@ public class CSCE550_Project1 {
                 result = lint / rint;
                 break;
             case ":=":
-
-                updateSymbolTableEntry(lhs, "" + rint);
+                updateSymbolTableEntry(lhs, "" + rint, false);
                 return "" + rint;
             default:
                 return "" + result;
@@ -451,7 +585,7 @@ public class CSCE550_Project1 {
                         if (elserhs.contains(";")) {
                             elserhs = elserhs.substring(0, elserhs.indexOf(";"));
                         }
-                        // print("Else " + elselhs + "," + elseop + "," + elserhs);
+                        //print("Else " + elselhs + "," + elseop + "," + elserhs);
                         return (performOp(elselhs, elseop, elserhs, elseparsed));
 
                     }
@@ -485,7 +619,7 @@ public class CSCE550_Project1 {
                                     }
                                     String result = performOp(whileArr[aIndex + 2], whileArr[aIndex + 3], whileArr[aIndex + 4].substring(0, whileArr[aIndex + 4].indexOf(";")), whileArr);
 
-                                    updateSymbolTableEntry(whileArr[aIndex], result);
+                                    updateSymbolTableEntry(whileArr[aIndex], result, false);
 
                                     l++;
                                     if (whileLine.substring(whileLine.length() - 1).equals("}")) {
@@ -511,7 +645,7 @@ public class CSCE550_Project1 {
                                     }
                                     String result = performOp(whileArr[aIndex + 2], whileArr[aIndex + 3], whileArr[aIndex + 4].substring(0, whileArr[aIndex + 4].indexOf(";")), whileArr);
 
-                                    updateSymbolTableEntry(whileArr[aIndex], result);
+                                    updateSymbolTableEntry(whileArr[aIndex], result, false);
 
                                     l++;
                                     if (whileLine.substring(whileLine.length() - 1).equals("}")) {
@@ -543,7 +677,7 @@ public class CSCE550_Project1 {
                                     }
                                     String result = performOp(whileArr[aIndex + 2], whileArr[aIndex + 3], whileArr[aIndex + 4].substring(0, whileArr[aIndex + 4].indexOf(";")), whileArr);
 
-                                    updateSymbolTableEntry(whileArr[aIndex], result);
+                                    updateSymbolTableEntry(whileArr[aIndex], result, false);
 
                                     l++;
                                     if (whileLine.substring(whileLine.length() - 1).equals("}")) {
@@ -570,7 +704,7 @@ public class CSCE550_Project1 {
                                     }
                                     String result = performOp(whileArr[aIndex + 2], whileArr[aIndex + 3], whileArr[aIndex + 4].substring(0, whileArr[aIndex + 4].indexOf(";")), whileArr);
 
-                                    updateSymbolTableEntry(whileArr[aIndex], result);
+                                    updateSymbolTableEntry(whileArr[aIndex], result, false);
 
                                     l++;
                                     if (whileLine.substring(whileLine.length() - 1).equals("}")) {

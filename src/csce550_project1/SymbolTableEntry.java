@@ -26,11 +26,10 @@ public class SymbolTableEntry {
     //FUNCTIONS 
     String parameters;
     ArrayList<String> body;
-   
+
     //END FUNCTIONS
-    
-    Stack<SymbolTableEntry> st = new Stack<SymbolTableEntry>();
-    
+    Stack<String> st = new Stack<String>();
+
     SymbolTableEntry() {
         type = "";
         name = "";
@@ -78,10 +77,23 @@ public class SymbolTableEntry {
         return entry;
 
     }
-    
-    public void updateEntry(){
-        st.push(this);
-        
+
+    public void updateEntry(String addValue) {
+        st.push(this.value);
+        this.value = addValue;
+       // System.out.println(st.toString());
+
+    }
+
+    public void revertEntry() {
+        //System.out.println(st.toString());
+
+        if (st.peek() != null) {
+
+            this.value = st.pop();
+
+        }
+
     }
 
 }
