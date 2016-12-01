@@ -71,19 +71,37 @@ public class CSCE550_Project1 {
     }
 
     public static String findInSymbolTableByName(String symbolString) {
-        String name = "";
-
+        String name = symbolString;
+        //print("lookup: " + symbolString);
         for (int i = 0; i < SymbolTable.size(); i++) {
 
             if (SymbolTable.get(i).type.equals("func") && (symbolString.indexOf("(") > 0)) {
-                name = symbolString.substring(0, symbolString.indexOf("("));
+                symbolString = symbolString.substring(0, symbolString.indexOf("("));
 
             }
+
             if (symbolString.equals(SymbolTable.get(i).name) && (SymbolTable.get(i).type.equals("global") || SymbolTable.get(i).type.equals("local"))) {
                 String value = SymbolTable.get(i).value;
-
+                //  print("found global/local");
                 return value;
-            } else if (name.equals(SymbolTable.get(i).name) && (SymbolTable.get(i).type.equals("func"))) {
+            } else if (symbolString.equals(SymbolTable.get(i).name) && (SymbolTable.get(i).type.equals("func"))) {
+
+                // print("found func: " + symbolString + "," + name.substring(name.indexOf("(") + 1, name.indexOf(")")));
+                for (int j = 0; j < SymbolTable.size(); j++) {
+                    if (name.substring(name.indexOf("(") + 1, name.indexOf(")")).equals(SymbolTable.get(j).name) && (SymbolTable.get(j).type.equals("global") || SymbolTable.get(j).type.equals("local"))) {
+                        String value = SymbolTable.get(j).value;
+
+                        SymbolTableEntry add = new SymbolTableEntry();
+
+                        add = new SymbolTableEntry("local", SymbolTable.get(i).parameters, value);
+
+                        SymbolTable.add(add);
+
+                        // print("found parameter global/local: " + SymbolTable.get(i).parameters + "," + value);
+                    } else {
+                        // print("No parameter found");
+                    }
+                }
 
                 String value = processFunction(symbolString, SymbolTable.get(i));
                 return value;
@@ -119,26 +137,99 @@ public class CSCE550_Project1 {
 
     }
 
-    public static String performOp(String lhs, String op, String rhs) {
+    public static SymbolTableEntry getEntry(String name) {
 
-        int result = 0;
-        String lval = findInSymbolTableByName(lhs);
-        String rval = findInSymbolTableByName(rhs);
-        int lint;
-        if (!lval.equals("")) {
-            lint = Integer.parseInt(findInSymbolTableByName(lhs));
-        } else {
-            lint = Integer.parseInt(lhs);
+        SymbolTableEntry entry = null;
+
+        for (int i = 0; i < SymbolTable.size(); i++) {
+
+            if (name.equals(SymbolTable.get(i).name)) {
+                //  print("found it:" + name);
+                return SymbolTable.get(i);
+
+            }
+
         }
-        int rint = 0;
-        if (!op.equals(":=")) {
+        print("failed: " + name);
 
-            if (!rval.equals("")) {
-                rint = Integer.parseInt(findInSymbolTableByName(rhs));
-            } else {
-                rint = Integer.parseInt(rhs);
+        return entry;
+    }
+
+    public static boolean isInteger(String s) {
+        return isInteger(s, 10);
+    }
+
+    public static boolean isInteger(String s, int radix) {
+        if (s.isEmpty()) {
+            return false;
+        }
+        for (int i = 0; i < s.length(); i++) {
+            if (i == 0 && s.charAt(i) == '-') {
+                if (s.length() == 1) {
+                    return false;
+                } else {
+                    continue;
+                }
+            }
+            if (Character.digit(s.charAt(i), radix) < 0) {
+                return false;
             }
         }
+        return true;
+    }
+
+    public static String performOp(String lhs, String op, String rhs, String[] arr) {
+
+        int result = 0;
+        SymbolTableEntry leftEntry = new SymbolTableEntry();
+        SymbolTableEntry rightEntry = new SymbolTableEntry();
+
+        if (lhs.contains("(")) {
+            leftEntry = getEntry(lhs.substring(0, lhs.indexOf("(")));
+
+        } else if (!findInSymbolTableByName(lhs).equals("")) {
+            leftEntry = getEntry(lhs);
+
+        } else {
+            leftEntry.value = lhs;
+        }
+
+        if (rhs.contains("(")) {
+            rightEntry = getEntry(rhs.substring(0, rhs.indexOf(";") - 1));
+
+        } else if (!findInSymbolTableByName(rhs).equals("")) {
+
+            rightEntry = getEntry(rhs);
+
+        } else {
+            rightEntry.value = rhs;
+        }
+
+        String lval = "";
+        if (leftEntry.type.equals("global") || leftEntry.type.equals("local")) {
+            lval = findInSymbolTableByName(lhs);
+        }
+
+        String rval = "";
+
+        if (rightEntry.type.equals("global") || rightEntry.type.equals("local")) {
+            lval = findInSymbolTableByName(rhs);
+        }
+        int lint;
+        if (isInteger(leftEntry.value)) {
+            lint = Integer.parseInt(leftEntry.value);
+        } else {
+            lint = Integer.parseInt(findInSymbolTableByName(leftEntry.value));
+        }
+
+        int rint = 0;
+     
+            if (isInteger(rightEntry.value)) {
+                rint = Integer.parseInt(rightEntry.value);
+            } else {
+                rint = Integer.parseInt(findInSymbolTableByName(rightEntry.value));
+            }
+
         switch (op) {
             case "+":
                 result = lint + rint;
@@ -153,8 +244,9 @@ public class CSCE550_Project1 {
                 result = lint / rint;
                 break;
             case ":=":
-                updateSymbolTableEntry(lhs, rhs);
-                return rhs;
+
+                updateSymbolTableEntry(lhs, "" + rint);
+                return "" + rint;
             default:
                 return "";
         }
@@ -164,22 +256,18 @@ public class CSCE550_Project1 {
 
     public static String processFunction(String symbolString, SymbolTableEntry entry) {
 
-        String param = symbolString.substring(symbolString.indexOf("(") + 1, symbolString.length() - 1);
+        String param = entry.parameters;
+        String value = entry.value;//findInSymbolTableByName(symbolString.substring(symbolString.indexOf("("), symbolString.indexOf(")")));
+        // print("Val: " + symbolString.substring(symbolString.indexOf("(") + 1, symbolString.indexOf(")")));
 
-        String value = findInSymbolTableByName(param);
-
-        SymbolTableEntry add = new SymbolTableEntry();
-        add = new SymbolTableEntry("local", entry.parameters, value);
-
-        SymbolTable.add(add);
         String lhs = "";
         String op = "";
         String rhs = "";
-        for (int i = 0; i < entry.body.size() - 1; i++) {
+        for (int i = 0; i < entry.body.size(); i++) {
 
             String line = entry.body.get(i);
             String[] parsed = line.split("\\s+");
-            print(line);
+            // print(line);
             for (int j = 0; j < parsed.length; j++) {
                 boolean conditionalflag = false;
 
@@ -219,8 +307,8 @@ public class CSCE550_Project1 {
                                         }
 
                                     } else if (parsed.length == (j + 7)) { //if with a operation to calc.
-                                        String result = performOp(parsed[j + 4], parsed[j + 5], parsed[j + 6].substring(0, parsed[j + 6].indexOf(";")));
-                                        print("hello" + parsed[j + 4]);
+                                        String result = performOp(parsed[j + 4], parsed[j + 5], parsed[j + 6].substring(0, parsed[j + 6].indexOf(";")), parsed);
+
                                         //updateSymbolTableEntry()
                                         return (result);
                                     }
@@ -247,7 +335,7 @@ public class CSCE550_Project1 {
 
                                     } else if (parsed.length == (j + 7)) {
 
-                                        return (performOp(parsed[j + 4], parsed[j + 5], parsed[j + 6].substring(0, parsed[j + 6].indexOf(";"))));
+                                        return (performOp(parsed[j + 4], parsed[j + 5], parsed[j + 6].substring(0, parsed[j + 6].indexOf(";")), parsed));
                                     }
                                 } else if (lhsV.equals(rhs)) {
                                     conditionalflag = false;
@@ -278,12 +366,15 @@ public class CSCE550_Project1 {
                                 elselhs = elseparsed[k + 1];
                                 elseop = elseparsed[k + 2];
                                 elserhs = elseparsed[k + 3];
+                                //print(elselhs + elseop + elserhs);
                             }
 
                         }
-
-                        //print(elselhs + "," + elseop + "," + elserhs);
-                        return (performOp(elselhs, elseop, elserhs));
+                        if (elserhs.contains(";")) {
+                            elserhs = elserhs.substring(0, elserhs.indexOf(";"));
+                        }
+                        // print("Else " + elselhs + "," + elseop + "," + elserhs);
+                        return (performOp(elselhs, elseop, elserhs, elseparsed));
 
                     }
 
@@ -314,7 +405,7 @@ public class CSCE550_Project1 {
                                             a = whileArr.length + 1;
                                         }
                                     }
-                                    String result = performOp(whileArr[aIndex + 2], whileArr[aIndex + 3], whileArr[aIndex + 4].substring(0, whileArr[aIndex + 4].indexOf(";")));
+                                    String result = performOp(whileArr[aIndex + 2], whileArr[aIndex + 3], whileArr[aIndex + 4].substring(0, whileArr[aIndex + 4].indexOf(";")), whileArr);
 
                                     updateSymbolTableEntry(whileArr[aIndex], result);
 
@@ -340,7 +431,7 @@ public class CSCE550_Project1 {
                                             a = whileArr.length + 1;
                                         }
                                     }
-                                    String result = performOp(whileArr[aIndex + 2], whileArr[aIndex + 3], whileArr[aIndex + 4].substring(0, whileArr[aIndex + 4].indexOf(";")));
+                                    String result = performOp(whileArr[aIndex + 2], whileArr[aIndex + 3], whileArr[aIndex + 4].substring(0, whileArr[aIndex + 4].indexOf(";")), whileArr);
 
                                     updateSymbolTableEntry(whileArr[aIndex], result);
 
@@ -372,7 +463,7 @@ public class CSCE550_Project1 {
                                             a = whileArr.length + 1;
                                         }
                                     }
-                                    String result = performOp(whileArr[aIndex + 2], whileArr[aIndex + 3], whileArr[aIndex + 4].substring(0, whileArr[aIndex + 4].indexOf(";")));
+                                    String result = performOp(whileArr[aIndex + 2], whileArr[aIndex + 3], whileArr[aIndex + 4].substring(0, whileArr[aIndex + 4].indexOf(";")), whileArr);
 
                                     updateSymbolTableEntry(whileArr[aIndex], result);
 
@@ -399,7 +490,7 @@ public class CSCE550_Project1 {
                                             a = whileArr.length + 1;
                                         }
                                     }
-                                    String result = performOp(whileArr[aIndex + 2], whileArr[aIndex + 3], whileArr[aIndex + 4].substring(0, whileArr[aIndex + 4].indexOf(";")));
+                                    String result = performOp(whileArr[aIndex + 2], whileArr[aIndex + 3], whileArr[aIndex + 4].substring(0, whileArr[aIndex + 4].indexOf(";")), whileArr);
 
                                     updateSymbolTableEntry(whileArr[aIndex], result);
 
@@ -419,15 +510,36 @@ public class CSCE550_Project1 {
                     }
 
                     //i = count;
-                    
-                    
+                } else {
+
+                    int counting = 0;
+                    for (int r = 0; r < parsed.length; r++) {
+
+                        if (parsed[r].contains(";")) {
+                            r = parsed.length + 1;
+                            break;
+                        }
+                        if (parsed[r].equals("")) {
+                            counting++;
+                        }
+                    }
+
+                    if ((parsed.length - counting) == 3) {
+                        String result = performOp(parsed[counting], parsed[counting + 1], parsed[counting + 2].substring(0, parsed[counting + 2].indexOf(";")), parsed);
+                        
+
+                    } else if ((parsed.length - counting) == 1) {
+
+                        return findInSymbolTableByName(parsed[counting].substring(0, parsed[counting].indexOf(";")));
+                    }
+
                 }
                 //print("plz:" + line);
             }
 
         }
 
-        SymbolTable.remove(add);
+        //SymbolTable.remove(add);
         return "Value not computed";
     }
 
