@@ -3,7 +3,7 @@ global ret;
 
 func fact(n) {
 	if (n == 1) 1;
-	else n * n;}
+	else n * fact( n - 1 );}
 
 func ifact(n) {
 	local ans := 1; 
