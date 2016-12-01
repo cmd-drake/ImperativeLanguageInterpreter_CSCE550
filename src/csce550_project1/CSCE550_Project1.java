@@ -103,7 +103,7 @@ public class CSCE550_Project1 {
                     }
                 }
 
-                String value = processFunction(symbolString, SymbolTable.get(i));
+                String value = processFunction(SymbolTable.get(i));
                 return value;
             }
 
@@ -178,58 +178,136 @@ public class CSCE550_Project1 {
         return true;
     }
 
+    public static boolean isFunc(String name) {
+        for (int i = 0; i < SymbolTable.size(); i++) {
+
+            if (name.equals(SymbolTable.get(i).name) && (SymbolTable.get(i).type.equals("func"))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public static String performOp(String lhs, String op, String rhs, String[] arr) {
 
-        int result = 0;
-        SymbolTableEntry leftEntry = new SymbolTableEntry();
-        SymbolTableEntry rightEntry = new SymbolTableEntry();
-
+        //print("Perform Op: " + lhs + op + rhs);
+        boolean funcFlagL = false;
         if (lhs.contains("(")) {
-            leftEntry = getEntry(lhs.substring(0, lhs.indexOf("(")));
-
-        } else if (!findInSymbolTableByName(lhs).equals("")) {
-            leftEntry = getEntry(lhs);
-
+            funcFlagL = isFunc(lhs.substring(0, lhs.indexOf("(")));
         } else {
-            leftEntry.value = lhs;
+            funcFlagL = isFunc(lhs);
         }
-
+        boolean funcFlagR = false;
         if (rhs.contains("(")) {
-            rightEntry = getEntry(rhs.substring(0, rhs.indexOf(";") - 1));
-
-        } else if (!findInSymbolTableByName(rhs).equals("")) {
-
-            rightEntry = getEntry(rhs);
-
+            funcFlagR = isFunc(rhs.substring(0, rhs.indexOf("(")));
         } else {
-            rightEntry.value = rhs;
+            funcFlagR = isFunc(rhs);
         }
-
-        String lval = "";
-        if (leftEntry.type.equals("global") || leftEntry.type.equals("local")) {
-            lval = findInSymbolTableByName(lhs);
-        }
-
-        String rval = "";
-
-        if (rightEntry.type.equals("global") || rightEntry.type.equals("local")) {
-            lval = findInSymbolTableByName(rhs);
-        }
-        int lint;
-        if (isInteger(leftEntry.value)) {
-            lint = Integer.parseInt(leftEntry.value);
-        } else {
-            lint = Integer.parseInt(findInSymbolTableByName(leftEntry.value));
-        }
-
+        int result = 0;
+        int lint = 0;
         int rint = 0;
-     
+        // print("Bool Check: " + funcFlagL + funcFlagR);
+        if (funcFlagL == false && funcFlagR == false) {
+
+            SymbolTableEntry leftEntry = new SymbolTableEntry();
+            SymbolTableEntry rightEntry = new SymbolTableEntry();
+
+            if (lhs.contains("(")) {
+                leftEntry = getEntry(lhs.substring(0, lhs.indexOf("(")));
+
+            } else if (!findInSymbolTableByName(lhs).equals("")) {
+                leftEntry = getEntry(lhs);
+
+            } else {
+                leftEntry.value = lhs;
+            }
+
+            if (rhs.contains("(")) {
+                rightEntry = getEntry(rhs.substring(0, rhs.indexOf(";") - 1));
+
+            } else if (!findInSymbolTableByName(rhs).equals("")) {
+
+                rightEntry = getEntry(rhs);
+
+            } else {
+                rightEntry.value = rhs;
+            }
+
+            String lval = "";
+            if (leftEntry.type.equals("global") || leftEntry.type.equals("local")) {
+                lval = findInSymbolTableByName(lhs);
+            }
+
+            String rval = "";
+
+            if (rightEntry.type.equals("global") || rightEntry.type.equals("local")) {
+                lval = findInSymbolTableByName(rhs);
+            }
+
+            if (isInteger(leftEntry.value)) {
+                lint = Integer.parseInt(leftEntry.value);
+            } else {
+                lint = Integer.parseInt(findInSymbolTableByName(leftEntry.value));
+            }
+
             if (isInteger(rightEntry.value)) {
                 rint = Integer.parseInt(rightEntry.value);
             } else {
                 rint = Integer.parseInt(findInSymbolTableByName(rightEntry.value));
             }
+        } else {
 
+            if (funcFlagL == true) {
+                int count = 0;
+                int totalCount = 0;
+                for (int i = 0; i < arr.length; i++) {
+                    if (arr[i].equals(lhs)) {
+                        count = i;
+                    }
+                    totalCount++;
+                }
+                //print("detect: " + arr[count]);
+
+                if ((totalCount - count) == 5) {
+                    String ans = performOp(arr[count + 1], arr[count + 2], arr[count + 3], arr);
+
+                    if (isInteger(ans)) {
+                        lint = Integer.parseInt(ans);
+                    } else {
+                        lint = Integer.parseInt(findInSymbolTableByName(ans));
+                    }
+
+                    updateSymbolTableEntry(lhs, ans);
+                }
+            }
+            if (funcFlagR == true) {
+                int count = 0;
+                int totalCount = 0;
+                for (int i = 0; i < arr.length; i++) {
+                    if (arr[i].equals(rhs)) {
+                        count = i;
+                    }
+                    totalCount++;
+                }
+                //print("detect: " + arr[count]);
+
+                if ((totalCount - count) == 5) {
+                    String ans = performOp(arr[count + 1], arr[count + 2], arr[count + 3], arr);
+
+                    if (isInteger(ans)) {
+                        rint = Integer.parseInt(ans);
+                    } else {
+                        rint = Integer.parseInt(findInSymbolTableByName(ans));
+                    }
+                    
+                    updateSymbolTableEntry(arr[count+1], ans);
+                    SymbolTableEntry entry = getEntry(arr[count].substring(0, arr[count].indexOf("(")));
+                    processFunction(entry);
+                }
+            }
+        }
+        //print("Do Op" + lint + op + rint);
         switch (op) {
             case "+":
                 result = lint + rint;
@@ -248,13 +326,13 @@ public class CSCE550_Project1 {
                 updateSymbolTableEntry(lhs, "" + rint);
                 return "" + rint;
             default:
-                return "";
+                return "" + result;
         }
 
         return "" + result;
     }
 
-    public static String processFunction(String symbolString, SymbolTableEntry entry) {
+    public static String processFunction(SymbolTableEntry entry) {
 
         String param = entry.parameters;
         String value = entry.value;//findInSymbolTableByName(symbolString.substring(symbolString.indexOf("("), symbolString.indexOf(")")));
@@ -526,7 +604,6 @@ public class CSCE550_Project1 {
 
                     if ((parsed.length - counting) == 3) {
                         String result = performOp(parsed[counting], parsed[counting + 1], parsed[counting + 2].substring(0, parsed[counting + 2].indexOf(";")), parsed);
-                        
 
                     } else if ((parsed.length - counting) == 1) {
 
