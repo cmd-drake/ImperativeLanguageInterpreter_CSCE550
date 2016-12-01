@@ -26,7 +26,7 @@ public class SymbolTableEntry {
     //FUNCTIONS 
     String parameters;
     ArrayList<String> body;
-    AST bodyAST = new AST();
+   
     //END FUNCTIONS
     
     Stack<SymbolTableEntry> st = new Stack<SymbolTableEntry>();
